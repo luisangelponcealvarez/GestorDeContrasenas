@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Gestor de Contraseñas</title>
+  </head>
+  <body>
+    <h1>Gestor de Contraseñas</h1>
+    <form method="POST" action="/">
+      <label for="service">Servicio:</label>
+      <input type="text" id="service" name="service" required /><br />
+
+      <label for="password">Contraseña:</label>
+      <input type="password" id="password" name="password" required /><br />
+
+      <input type="submit" name="add_password" value="Agregar Contraseña" />
+      <input
+        type="submit"
+        name="get_password"
+        value="Obtener Contraseña"
+      /><br />
+
+      <label for="length">Longitud de la Contraseña:</label>
+      <input type="number" id="length" name="length" required /><br />
+
+      <input
+        type="submit"
+        name="generate_password"
+        value="Generar Contraseña"
+      />
+      <br />
+
+      <label for="file_path">Ruta de archivo:</label>
+      <input type="text" id="file_path" name="file_path" required /><br />
+
+      <input type="submit" name="save_passwords" value="Guardar Contraseñas" />
+    </form>
+
+    <p>{{ message }}</p>
+  </body>
+</html>
