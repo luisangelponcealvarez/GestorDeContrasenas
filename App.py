@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import csv
+import random
+import string
 
 class RegistroApp(tk.Tk):
     def __init__(self):
@@ -38,6 +40,10 @@ class RegistroApp(tk.Tk):
         self.contrasena_entry = tk.Entry(self, textvariable=self.contrasena_var, show="*")
         self.contrasena_entry.pack()
         
+        # Botón para generar una contraseña aleatoria
+        generar_button = tk.Button(self, text="Generar Contraseña", command=self.generar_contrasena)
+        generar_button.pack(pady=5)
+        
         # Botón para guardar los datos
         guardar_button = tk.Button(self, text="Guardar", command=self.guardar_datos)
         guardar_button.pack(pady=10)
@@ -47,13 +53,19 @@ class RegistroApp(tk.Tk):
     
     def cargar_datos(self):
         try:
-            with open("datos.csv", "r") as file:
+            with open("passwords.csv", "r") as file:
                 reader = csv.reader(file)
                 for row in reader:
                     if len(row) == 3:
                         self.tabla.insert("", "end", values=row)
         except FileNotFoundError:
             pass
+    
+    def generar_contrasena(self):
+        longitud = 20
+        caracteres = string.ascii_letters + string.digits + string.punctuation
+        contrasena = ''.join(random.choice(caracteres) for _ in range(longitud))
+        self.contrasena_var.set(contrasena)
     
     def guardar_datos(self):
         nombre = self.nombre_var.get()
@@ -74,7 +86,7 @@ class RegistroApp(tk.Tk):
                 messagebox.showinfo("Éxito", "Datos guardados correctamente.")
             
             # Guardar los datos en un archivo CSV
-            with open("datos.csv", "w", newline="") as file:
+            with open("passwords.csv", "w", newline="") as file:
                 writer = csv.writer(file)
                 for item in self.tabla.get_children():
                     row = self.tabla.item(item)["values"]
