@@ -35,8 +35,8 @@ class RegistroApp(tk.Tk):
         
         contrasena_label = tk.Label(self, text="Contraseña:")
         contrasena_label.pack()
-        contrasena_entry = tk.Entry(self, textvariable=self.contrasena_var, show="*")
-        contrasena_entry.pack()
+        self.contrasena_entry = tk.Entry(self, textvariable=self.contrasena_var, show="*")
+        self.contrasena_entry.pack()
         
         # Botón para guardar los datos
         guardar_button = tk.Button(self, text="Guardar", command=self.guardar_datos)
@@ -90,11 +90,17 @@ class RegistroApp(tk.Tk):
             self.nombre_var.set(datos[0])
             self.correo_var.set(datos[1])
             self.contrasena_var.set(datos[2])
+            
+            # Mostrar la contraseña en el campo de entrada
+            self.contrasena_entry.config(show="")
     
     def limpiar_campos(self):
         self.nombre_var.set("")
         self.correo_var.set("")
         self.contrasena_var.set("")
+        
+        # Ocultar la contraseña en el campo de entrada
+        self.contrasena_entry.config(show="*")
 
 if __name__ == "__main__":
     app = RegistroApp()
