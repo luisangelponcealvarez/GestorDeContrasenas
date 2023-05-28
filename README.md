@@ -1,4 +1,4 @@
-## OrganizadorDeListas
+## GestorDeContrasenas
 
 #### Este proyecto esta desarrollado en python para hacer un gestor de contraseñas que te da un archivo para ver lo guardado
 
