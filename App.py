@@ -17,11 +17,10 @@ class RegistroApp(tk.Tk):
         self.fila_seleccionada = None
         
         # Crear la tabla para mostrar los datos
-        self.tabla = ttk.Treeview(self, columns=("Nombre", "Correo", "Contraseña", "Eliminar"), show="headings", selectmode='browse')
+        self.tabla = ttk.Treeview(self, columns=("Nombre", "Correo", "Contraseña"), show="headings", selectmode='browse')
         self.tabla.heading("Nombre", text="Nombre")
         self.tabla.heading("Correo", text="Correo")
         self.tabla.heading("Contraseña", text="Contraseña")
-        self.tabla.heading("Eliminar", text="Eliminar")
         self.tabla.grid(row=0, column=0, columnspan=5, padx=10, pady=10, sticky="nsew")
         self.tabla.bind('<<TreeviewSelect>>', self.mostrar_seleccion)
         
@@ -49,10 +48,6 @@ class RegistroApp(tk.Tk):
         guardar_button = tk.Button(self, text="Guardar", command=self.guardar_datos)
         guardar_button.grid(row=4, column=0, pady=10)
         
-        # Botón para eliminar los datos
-        eliminar_button = tk.Button(self, text="Eliminar", command=self.eliminar_dato)
-        eliminar_button.grid(row=4, column=1, padx=5, pady=10)
-        
         # Crear campo de búsqueda y botón de búsqueda
         buscar_label = tk.Label(self, text="Buscar:")
         buscar_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)
@@ -74,7 +69,7 @@ class RegistroApp(tk.Tk):
                 reader = csv.reader(file)
                 for row in reader:
                     if len(row) == 3:
-                        self.tabla.insert("", "end", values=row + [""])
+                        self.tabla.insert("", "end", values=row)
         except FileNotFoundError:
             pass
     
@@ -86,13 +81,13 @@ class RegistroApp(tk.Tk):
         if nombre and correo and contrasena:
             if self.fila_seleccionada:
                 # Editar los datos de la fila seleccionada
-                self.tabla.item(self.fila_seleccionada, values=(nombre, correo, contrasena, ""))
+                self.tabla.item(self.fila_seleccionada, values=(nombre, correo, contrasena))
                 self.fila_seleccionada = None
                 self.limpiar_campos()
                 messagebox.showinfo("Éxito", "Datos actualizados correctamente.")
             else:
                 # Agregar los datos a la tabla
-                self.tabla.insert("", "end", values=(nombre, correo, contrasena, ""))
+                self.tabla.insert("", "end", values=(nombre, correo, contrasena))
                 self.limpiar_campos()
                 messagebox.showinfo("Éxito", "Datos guardados correctamente.")
             
@@ -101,7 +96,7 @@ class RegistroApp(tk.Tk):
                 writer = csv.writer(file)
                 for item in self.tabla.get_children():
                     row = self.tabla.item(item)["values"]
-                    writer.writerow(row[:-1])
+                    writer.writerow(row)
         else:
             messagebox.showerror("Error", "Por favor, rellene todos los campos.")
     
@@ -137,7 +132,7 @@ class RegistroApp(tk.Tk):
                     reader = csv.reader(file)
                     for row in reader:
                         if len(row) == 3 and any(termino.lower() in value.lower() for value in row):
-                            self.tabla.insert("", "end", values=row + [""])
+                            self.tabla.insert("", "end", values=row)
             except FileNotFoundError:
                 pass
         else:
@@ -171,7 +166,7 @@ class RegistroApp(tk.Tk):
                     writer = csv.writer(file)
                     for item in self.tabla.get_children():
                         row = self.tabla.item(item)["values"]
-                        writer.writerow(row[:-1])
+                        writer.writerow(row)
         else:
             messagebox.showwarning("Advertencia", "Por favor, seleccione una fila para eliminar.")
     
