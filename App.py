@@ -21,19 +21,19 @@ class RegistroApp(tk.Tk):
         self.tabla.heading("Nombre", text="Nombre")
         self.tabla.heading("Correo", text="Correo")
         self.tabla.heading("Contraseña", text="Contraseña")
-        self.tabla.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        self.tabla.grid(row=0, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
         self.tabla.bind('<<TreeviewSelect>>', self.mostrar_seleccion)
         
         # Crear etiquetas y campos de entrada
         nombre_label = tk.Label(self, text="Nombre:")
         nombre_label.grid(row=1, column=0, sticky="w", padx=10, pady=5)
         nombre_entry = tk.Entry(self, textvariable=self.nombre_var)
-        nombre_entry.grid(row=1, column=1, columnspan=2, sticky="we", padx=10, pady=5)
+        nombre_entry.grid(row=1, column=1, columnspan=3, sticky="we", padx=10, pady=5)
         
         correo_label = tk.Label(self, text="Correo:")
         correo_label.grid(row=2, column=0, sticky="w", padx=10, pady=5)
         correo_entry = tk.Entry(self, textvariable=self.correo_var)
-        correo_entry.grid(row=2, column=1, columnspan=2, sticky="we", padx=10, pady=5)
+        correo_entry.grid(row=2, column=1, columnspan=3, sticky="we", padx=10, pady=5)
         
         contrasena_label = tk.Label(self, text="Contraseña:")
         contrasena_label.grid(row=3, column=0, sticky="w", padx=10, pady=5)
@@ -52,16 +52,20 @@ class RegistroApp(tk.Tk):
         buscar_label = tk.Label(self, text="Buscar:")
         buscar_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)
         self.buscar_entry = tk.Entry(self)
-        self.buscar_entry.grid(row=5, column=1, padx=10, pady=5, sticky="we")
+        self.buscar_entry.grid(row=5, column=1, sticky="we", padx=10, pady=5)
         buscar_button = tk.Button(self, text="Buscar", command=self.buscar_datos)
         buscar_button.grid(row=5, column=2, padx=10, pady=5)
+        
+        # Botón para ver todos los datos
+        ver_todos_button = tk.Button(self, text="Ver Todos", command=self.ver_todos_los_datos)
+        ver_todos_button.grid(row=5, column=3, padx=10, pady=5)
         
         # Cargar los datos desde el archivo CSV
         self.cargar_datos()
     
     def cargar_datos(self):
         try:
-            with open("datos.csv", "r") as file:
+            with open("password.csv", "r") as file:
                 reader = csv.reader(file)
                 for row in reader:
                     if len(row) == 3:
@@ -88,7 +92,7 @@ class RegistroApp(tk.Tk):
                 messagebox.showinfo("Éxito", "Datos guardados correctamente.")
             
             # Guardar los datos en un archivo CSV
-            with open("datos.csv", "w", newline="") as file:
+            with open("password.csv", "w", newline="") as file:
                 writer = csv.writer(file)
                 for item in self.tabla.get_children():
                     row = self.tabla.item(item)["values"]
@@ -124,7 +128,7 @@ class RegistroApp(tk.Tk):
             
             # Cargar los datos desde el archivo CSV y filtrar las filas que coincidan con el término de búsqueda
             try:
-                with open("datos.csv", "r") as file:
+                with open("password.csv", "r") as file:
                     reader = csv.reader(file)
                     for row in reader:
                         if len(row) == 3 and any(termino.lower() in value.lower() for value in row):
@@ -132,12 +136,15 @@ class RegistroApp(tk.Tk):
             except FileNotFoundError:
                 pass
         else:
-            messagebox.showerror("Error", "Por favor, ingrese un término de búsqueda.")
+            # Si el campo de búsqueda está vacío, mostrar todos los datos nuevamente
+            self.cargar_datos()
     
     def generar_contrasena(self):
-        caracteres = string.ascii_letters + string.digits + string.punctuation
-        contrasena = ''.join(random.choice(caracteres) for _ in range(20))
+        contrasena = ''.join(random.choices(string.ascii_letters + string.digits, k=20))
         self.contrasena_var.set(contrasena)
+    
+    def ver_todos_los_datos(self):
+        self.cargar_datos()
 
 if __name__ == "__main__":
     app = RegistroApp()
