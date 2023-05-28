@@ -21,51 +21,53 @@ class RegistroApp(tk.Tk):
         self.tabla.heading("Nombre", text="Nombre")
         self.tabla.heading("Correo", text="Correo")
         self.tabla.heading("Contraseña", text="Contraseña")
-        self.tabla.pack(pady=10)
+        self.tabla.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
         self.tabla.bind('<<TreeviewSelect>>', self.mostrar_seleccion)
         
         # Crear etiquetas y campos de entrada
         nombre_label = tk.Label(self, text="Nombre:")
-        nombre_label.pack()
+        nombre_label.grid(row=1, column=0, sticky="w", padx=10, pady=5)
         nombre_entry = tk.Entry(self, textvariable=self.nombre_var)
-        nombre_entry.pack()
+        nombre_entry.grid(row=1, column=1, columnspan=2, sticky="we", padx=10, pady=5)
         
         correo_label = tk.Label(self, text="Correo:")
-        correo_label.pack()
+        correo_label.grid(row=2, column=0, sticky="w", padx=10, pady=5)
         correo_entry = tk.Entry(self, textvariable=self.correo_var)
-        correo_entry.pack()
+        correo_entry.grid(row=2, column=1, columnspan=2, sticky="we", padx=10, pady=5)
         
         contrasena_label = tk.Label(self, text="Contraseña:")
-        contrasena_label.pack()
+        contrasena_label.grid(row=3, column=0, sticky="w", padx=10, pady=5)
         self.contrasena_entry = tk.Entry(self, textvariable=self.contrasena_var, show="*")
-        self.contrasena_entry.pack()
+        self.contrasena_entry.grid(row=3, column=1, sticky="we", padx=10, pady=5)
         
-        # Botón para generar una contraseña aleatoria
+        # Botón para generar contraseña aleatoria
         generar_button = tk.Button(self, text="Generar Contraseña", command=self.generar_contrasena)
-        generar_button.pack(pady=5)
+        generar_button.grid(row=3, column=2, padx=10, pady=5)
         
         # Botón para guardar los datos
         guardar_button = tk.Button(self, text="Guardar", command=self.guardar_datos)
-        guardar_button.pack(pady=10)
+        guardar_button.grid(row=4, column=1, pady=10)
+        
+        # Crear campo de búsqueda y botón de búsqueda
+        buscar_label = tk.Label(self, text="Buscar:")
+        buscar_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)
+        self.buscar_entry = tk.Entry(self)
+        self.buscar_entry.grid(row=5, column=1, padx=10, pady=5, sticky="we")
+        buscar_button = tk.Button(self, text="Buscar", command=self.buscar_datos)
+        buscar_button.grid(row=5, column=2, padx=10, pady=5)
         
         # Cargar los datos desde el archivo CSV
         self.cargar_datos()
     
     def cargar_datos(self):
         try:
-            with open("passwords.csv", "r") as file:
+            with open("datos.csv", "r") as file:
                 reader = csv.reader(file)
                 for row in reader:
                     if len(row) == 3:
                         self.tabla.insert("", "end", values=row)
         except FileNotFoundError:
             pass
-    
-    def generar_contrasena(self):
-        longitud = 20
-        caracteres = string.ascii_letters + string.digits + string.punctuation
-        contrasena = ''.join(random.choice(caracteres) for _ in range(longitud))
-        self.contrasena_var.set(contrasena)
     
     def guardar_datos(self):
         nombre = self.nombre_var.get()
@@ -86,7 +88,7 @@ class RegistroApp(tk.Tk):
                 messagebox.showinfo("Éxito", "Datos guardados correctamente.")
             
             # Guardar los datos en un archivo CSV
-            with open("passwords.csv", "w", newline="") as file:
+            with open("datos.csv", "w", newline="") as file:
                 writer = csv.writer(file)
                 for item in self.tabla.get_children():
                     row = self.tabla.item(item)["values"]
@@ -113,7 +115,31 @@ class RegistroApp(tk.Tk):
         
         # Ocultar la contraseña en el campo de entrada
         self.contrasena_entry.config(show="*")
+    
+    def buscar_datos(self):
+        termino = self.buscar_entry.get()
+        if termino:
+            # Eliminar todas las filas de la tabla
+            self.tabla.delete(*self.tabla.get_children())
+            
+            # Cargar los datos desde el archivo CSV y filtrar las filas que coincidan con el término de búsqueda
+            try:
+                with open("datos.csv", "r") as file:
+                    reader = csv.reader(file)
+                    for row in reader:
+                        if len(row) == 3 and any(termino.lower() in value.lower() for value in row):
+                            self.tabla.insert("", "end", values=row)
+            except FileNotFoundError:
+                pass
+        else:
+            messagebox.showerror("Error", "Por favor, ingrese un término de búsqueda.")
+    
+    def generar_contrasena(self):
+        caracteres = string.ascii_letters + string.digits + string.punctuation
+        contrasena = ''.join(random.choice(caracteres) for _ in range(20))
+        self.contrasena_var.set(contrasena)
 
 if __name__ == "__main__":
     app = RegistroApp()
+    app.geometry("630x430")
     app.mainloop()
