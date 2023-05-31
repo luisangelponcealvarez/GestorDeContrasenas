@@ -147,29 +147,24 @@ class RegistroApp(tk.Tk):
         self.cargar_datos()
     
     def generar_contrasena(self):
-        longitud = 20
+        longitud = 8
         caracteres = string.ascii_letters + string.digits + string.punctuation
         contrasena_generada = ''.join(random.choice(caracteres) for _ in range(longitud))
         self.contrasena_var.set(contrasena_generada)
-    
-    def eliminar_dato(self):
-        if self.fila_seleccionada:
-            confirmacion = messagebox.askyesno("Confirmar", "¿Está seguro de que desea eliminar los datos seleccionados?")
-            if confirmacion:
-                self.tabla.delete(self.fila_seleccionada)
-                self.fila_seleccionada = None
-                self.limpiar_campos()
-                messagebox.showinfo("Éxito", "Datos eliminados correctamente.")
-                
-                # Guardar los datos actualizados en el archivo CSV
-                with open("password.csv", "w", newline="") as file:
-                    writer = csv.writer(file)
-                    for item in self.tabla.get_children():
-                        row = self.tabla.item(item)["values"]
-                        writer.writerow(row)
-        else:
-            messagebox.showwarning("Advertencia", "Por favor, seleccione una fila para eliminar.")
-    
+
+# Función para obtener los datos guardados
+def obtener_datos_guardados():
+    registros = []
+    try:
+        with open("password.csv", "r") as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if len(row) == 3:
+                    registros.append(row)
+    except FileNotFoundError:
+        pass
+    return registros
+
 if __name__ == "__main__":
     app = RegistroApp()
     app.mainloop()
