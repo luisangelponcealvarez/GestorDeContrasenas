@@ -6,6 +6,9 @@ import random
 import string
 
 class RegistroApp(tk.Tk):
+
+        
+
     def __init__(self):
         super().__init__()
         self.title("Registro de Usuarios")
