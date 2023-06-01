@@ -55,10 +55,6 @@ class RegistroApp(tk.Tk):
         buscar_button = tk.Button(self, text="Buscar", command=self.buscar_datos)
         buscar_button.grid(row=5, column=2, padx=10, pady=5)
 
-        # Botón para ver todos los datos
-        ver_todos_button = tk.Button(self, text="Ver Todos", command=self.mostrar_todos_los_datos)
-        ver_todos_button.grid(row=5, column=3, padx=10, pady=5)
-
         # Cargar los datos desde el archivo CSV
         self.cargar_datos()
 
@@ -156,28 +152,6 @@ class RegistroApp(tk.Tk):
                 messagebox.showinfo("Éxito", "Dato copiado al portapapeles.")
         else:
             messagebox.showwarning("Advertencia", "Por favor, seleccione una fila.")
-
-    def mostrar_todos_los_datos(self):
-        # Crear una ventana emergente para mostrar todos los datos
-        ventana_datos = tk.Toplevel(self)
-        ventana_datos.title("Todos los Datos")
-
-        # Crear una etiqueta para mostrar los datos
-        datos_label = tk.Label(ventana_datos, text="Todos los datos:")
-        datos_label.pack(padx=10, pady=10)
-
-        # Crear un cuadro de texto para mostrar los datos
-        datos_text = tk.Text(ventana_datos, height=10, width=40)
-        datos_text.pack(padx=10, pady=5)
-
-        # Cargar los datos desde el archivo CSV y mostrarlos en el cuadro de texto
-        try:
-            with open("password.csv", "r") as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    datos_text.insert(tk.END, f"Nombre: {row[0]}\nCorreo: {row[1]}\nContraseña: {row[2]}\n\n")
-        except FileNotFoundError:
-            pass
 
     def generar_contrasena(self):
         longitud = 20
