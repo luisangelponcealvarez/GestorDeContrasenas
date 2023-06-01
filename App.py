@@ -1,9 +1,8 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox, scrolledtext
 import csv
-import random
 import string
+import random
 
 class RegistroApp(tk.Tk):
 
@@ -11,60 +10,90 @@ class RegistroApp(tk.Tk):
 
     def __init__(self):
         super().__init__()
-        self.title("Registro de Usuarios")
-
-        # Crear variables para almacenar los datos ingresados y la fila seleccionada
+        self.title("Gestor de Contraseñas")
+        
+        # Variables para los campos de entrada
         self.nombre_var = tk.StringVar()
         self.correo_var = tk.StringVar()
         self.contrasena_var = tk.StringVar()
+        
         self.fila_seleccionada = None
         
-        # Crear la tabla para mostrar los datos
-        self.tabla = ttk.Treeview(self, columns=("Nombre", "Correo", "Contraseña"), show="headings", selectmode='browse')
+        # Crear los widgets
+        self.crear_widgets()
+    
+    def crear_widgets(self):
+        # Etiquetas
+        nombre_label = tk.Label(self, text="Nombre:")
+        nombre_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        correo_label = tk.Label(self, text="Correo:")
+        correo_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        contrasena_label = tk.Label(self, text="Contraseña:")
+        contrasena_label.grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        
+        # Campos de entrada
+        nombre_entry = tk.Entry(self, textvariable=self.nombre_var)
+        nombre_entry.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        correo_entry = tk.Entry(self, textvariable=self.correo_var)
+        correo_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+        contrasena_entry = tk.Entry(self, textvariable=self.contrasena_var, show="*")
+        contrasena_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        
+        # Botones
+        guardar_button = tk.Button(self, text="Guardar", command=self.guardar_datos)
+        guardar_button.grid(row=3, column=1, padx=10, pady=5)
+        generar_button = tk.Button(self, text="Generar Contraseña", command=self.generar_contrasena)
+        generar_button.grid(row=2, column=2, padx=10, pady=5)
+        
+        # Tabla
+        self.tabla = ttk.Treeview(self, columns=("Nombre", "Correo", "Contraseña"), show="headings")
         self.tabla.heading("Nombre", text="Nombre")
         self.tabla.heading("Correo", text="Correo")
         self.tabla.heading("Contraseña", text="Contraseña")
-        self.tabla.grid(row=0, column=0, columnspan=5, padx=10, pady=10, sticky="nsew")
-        self.tabla.bind('<<TreeviewSelect>>', self.mostrar_seleccion)
+        self.tabla.grid(row=4, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")
         
-        # Crear etiquetas y campos de entrada
-        nombre_label = tk.Label(self, text="Nombre:")
-        nombre_label.grid(row=1, column=0, sticky="w", padx=10, pady=5)
-        nombre_entry = tk.Entry(self, textvariable=self.nombre_var)
-        nombre_entry.grid(row=1, column=1, columnspan=4, sticky="we", padx=10, pady=5)
+        # Agregar scrollbars a la tabla
+        scrollbar_y = ttk.Scrollbar(self, orient="vertical", command=self.tabla.yview)
+        scrollbar_y.grid(row=4, column=2, sticky="ns")
+        scrollbar_x = ttk.Scrollbar(self, orient="horizontal", command=self.tabla.xview)
+        scrollbar_x.grid(row=5, column=0, columnspan=2, sticky="ew")
         
-        correo_label = tk.Label(self, text="Correo:")
-        correo_label.grid(row=2, column=0, sticky="w", padx=10, pady=5)
-        correo_entry = tk.Entry(self, textvariable=self.correo_var)
-        correo_entry.grid(row=2, column=1, columnspan=4, sticky="we", padx=10, pady=5)
+        self.tabla.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
         
-        contrasena_label = tk.Label(self, text="Contraseña:")
-        contrasena_label.grid(row=3, column=0, sticky="w", padx=10, pady=5)
-        self.contrasena_entry = tk.Entry(self, textvariable=self.contrasena_var, show="*")
-        self.contrasena_entry.grid(row=3, column=1, columnspan=3, sticky="we", padx=10, pady=5)
+        # Asociar evento de selección de fila a la función de mostrar selección
+        self.tabla.bind("<<TreeviewSelect>>", self.mostrar_seleccion)
         
-        # Botón para generar contraseña aleatoria
-        generar_button = tk.Button(self, text="Generar Contraseña", command=self.generar_contrasena)
-        generar_button.grid(row=3, column=4, padx=10, pady=5)
+        # Botón Ver Todos
+        ver_todos_button = tk.Button(self, text="Ver Todos", command=self.abrir_ventana_todos)
+        ver_todos_button.grid(row=5, column=1, padx=10, pady=5)
         
-        # Botón para guardar los datos
-        guardar_button = tk.Button(self, text="Guardar", command=self.guardar_datos)
-        guardar_button.grid(row=4, column=0, pady=10)
-        
-        # Crear campo de búsqueda y botón de búsqueda
-        buscar_label = tk.Label(self, text="Buscar:")
-        buscar_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)
-        self.buscar_entry = tk.Entry(self)
-        self.buscar_entry.grid(row=5, column=1, sticky="we", padx=10, pady=5)
-        buscar_button = tk.Button(self, text="Buscar", command=self.buscar_datos)
-        buscar_button.grid(row=5, column=2, padx=10, pady=5)
-        
-        # Botón para ver todos los datos
-        ver_todos_button = tk.Button(self, text="Ver Todos", command=self.ver_todos_los_datos)
-        ver_todos_button.grid(row=5, column=3, padx=10, pady=5)
-        
-        # Cargar los datos desde el archivo CSV
+        # Cargar los datos existentes
         self.cargar_datos()
+    
+    def guardar_datos(self):
+        nombre = self.nombre_var.get()
+        correo = self.correo_var.get()
+        contrasena = self.contrasena_var.get()
+        
+        if nombre and correo and contrasena:
+            datos = [nombre, correo, contrasena]
+            
+            # Guardar los datos en un archivo CSV
+            with open("password.csv", "a", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow(datos)
+            
+            # Limpiar los campos de entrada
+            self.nombre_var.set("")
+            self.correo_var.set("")
+            self.contrasena_var.set("")
+            
+            # Actualizar la tabla con los nuevos datos
+            self.tabla.insert("", "end", values=datos)
+            
+            messagebox.showinfo("Éxito", "Los datos han sido guardados correctamente.")
+        else:
+            messagebox.showwarning("Campos Vacíos", "Por favor, complete todos los campos.")
     
     def cargar_datos(self):
         try:
@@ -76,103 +105,67 @@ class RegistroApp(tk.Tk):
         except FileNotFoundError:
             pass
     
-    def guardar_datos(self):
-        nombre = self.nombre_var.get()
-        correo = self.correo_var.get()
-        contrasena = self.contrasena_var.get()
-        
-        if nombre and correo and contrasena:
-            if self.fila_seleccionada:
-                # Editar los datos de la fila seleccionada
-                self.tabla.item(self.fila_seleccionada, values=(nombre, correo, contrasena))
-                self.fila_seleccionada = None
-                self.limpiar_campos()
-                messagebox.showinfo("Éxito", "Datos actualizados correctamente.")
-            else:
-                # Agregar los datos a la tabla
-                self.tabla.insert("", "end", values=(nombre, correo, contrasena))
-                self.limpiar_campos()
-                messagebox.showinfo("Éxito", "Datos guardados correctamente.")
-            
-            # Guardar los datos en un archivo CSV
-            with open("password.csv", "w", newline="") as file:
-                writer = csv.writer(file)
-                for item in self.tabla.get_children():
-                    row = self.tabla.item(item)["values"]
-                    writer.writerow(row)
-        else:
-            messagebox.showerror("Error", "Por favor, rellene todos los campos.")
-    
     def mostrar_seleccion(self, event):
         seleccion = self.tabla.selection()
         if seleccion:
-            self.fila_seleccionada = seleccion
-            datos = self.tabla.item(seleccion)['values']
+            datos = self.tabla.item(seleccion[0])['values']
             self.nombre_var.set(datos[0])
             self.correo_var.set(datos[1])
             self.contrasena_var.set(datos[2])
-            
-            # Mostrar la contraseña en el campo de entrada
-            self.contrasena_entry.config(show="")
+            self.fila_seleccionada = seleccion[0]
     
-    def limpiar_campos(self):
-        self.nombre_var.set("")
-        self.correo_var.set("")
-        self.contrasena_var.set("")
+    def abrir_ventana_todos(self):
+        ventana_todos = tk.Toplevel(self)
+        ventana_todos.title("Todos los Datos")
         
-        # Ocultar la contraseña en el campo de entrada
-        self.contrasena_entry.config(show="*")
-    
-    def buscar_datos(self):
-        termino = self.buscar_entry.get()
-        if termino:
-            # Eliminar todas las filas de la tabla
-            self.tabla.delete(*self.tabla.get_children())
-            
-            # Cargar los datos desde el archivo CSV y filtrar las filas que coincidan con el término de búsqueda
-            try:
-                with open("password.csv", "r") as file:
-                    reader = csv.reader(file)
-                    for row in reader:
-                        if len(row) == 3 and any(termino.lower() in value.lower() for value in row):
-                            self.tabla.insert("", "end", values=row)
-            except FileNotFoundError:
-                pass
-        else:
-            # Si el campo de búsqueda está vacío, mostrar todos los datos nuevamente
-            self.ver_todos_los_datos()
-    
-    def ver_todos_los_datos(self):
-        # Eliminar todas las filas de la tabla
-        self.tabla.delete(*self.tabla.get_children())
+        # Tabla de "Ver Todos"
+        tabla_todos = ttk.Treeview(ventana_todos, columns=("Nombre", "Correo", "Contraseña"), show="headings")
+        tabla_todos.heading("Nombre", text="Nombre")
+        tabla_todos.heading("Correo", text="Correo")
+        tabla_todos.heading("Contraseña", text="Contraseña")
+        tabla_todos.pack(side="left", padx=10, pady=10, fill="both", expand=True)
         
-        # Cargar los datos desde el archivo CSV
-        self.cargar_datos()
-    
+        # Agregar scrollbars a la tabla
+        scrollbar_y = ttk.Scrollbar(ventana_todos, orient="vertical", command=tabla_todos.yview)
+        scrollbar_y.pack(side="right", fill="y")
+        scrollbar_x = ttk.Scrollbar(ventana_todos, orient="horizontal", command=tabla_todos.xview)
+        scrollbar_x.pack(side="bottom", fill="x")
+        
+        tabla_todos.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+        
+        # Cargar todos los datos en la tabla
+        try:
+            with open("password.csv", "r") as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if len(row) == 3:
+                        tabla_todos.insert("", "end", values=row)
+        except FileNotFoundError:
+            pass
+        
+        # Agregar campos de entrada para copiar los datos
+        campos_copia = scrolledtext.ScrolledText(ventana_todos, width=30, height=10)
+        campos_copia.pack(side="right", padx=10, pady=10)
+        
+        # Función para copiar los datos en los campos de entrada
+        def copiar_datos():
+            seleccion = tabla_todos.focus()
+            if seleccion:
+                datos = tabla_todos.item(seleccion)['values']
+                campos_copia.delete("1.0", "end")
+                campos_copia.insert("1.0", f"Nombre: {datos[0]}\nCorreo: {datos[1]}\nContraseña: {datos[2]}")
+        
+        # Botón para copiar los datos seleccionados
+        copiar_button = tk.Button(ventana_todos, text="Copiar Datos", command=copiar_datos)
+        copiar_button.pack(pady=5)
+        
     def generar_contrasena(self):
-        longitud = 20
+        longitud = 12
         caracteres = string.ascii_letters + string.digits + string.punctuation
-        contrasena_generada = ''.join(random.choice(caracteres) for _ in range(longitud))
-        self.contrasena_var.set(contrasena_generada)
-    
-    def eliminar_dato(self):
-        if self.fila_seleccionada:
-            confirmacion = messagebox.askyesno("Confirmar", "¿Está seguro de que desea eliminar los datos seleccionados?")
-            if confirmacion:
-                self.tabla.delete(self.fila_seleccionada)
-                self.fila_seleccionada = None
-                self.limpiar_campos()
-                messagebox.showinfo("Éxito", "Datos eliminados correctamente.")
-                
-                # Guardar los datos actualizados en el archivo CSV
-                with open("password.csv", "w", newline="") as file:
-                    writer = csv.writer(file)
-                    for item in self.tabla.get_children():
-                        row = self.tabla.item(item)["values"]
-                        writer.writerow(row)
-        else:
-            messagebox.showwarning("Advertencia", "Por favor, seleccione una fila para eliminar.")
-    
+        contrasena = ''.join(random.choice(caracteres) for _ in range(longitud))
+        self.contrasena_var.set(contrasena)
+
+
 if __name__ == "__main__":
     app = RegistroApp()
     app.mainloop()
