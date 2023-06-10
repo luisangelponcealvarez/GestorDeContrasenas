@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-import csv
+import sqlite3
 import random
 import string
 
@@ -15,6 +15,10 @@ class RegistroApp(tk.Tk):
         self.nombre_var = tk.StringVar()
         self.correo_var = tk.StringVar()
         self.contrasena_var = tk.StringVar()
+
+        # Conectar a la base de datos SQLite
+        self.conexion = sqlite3.connect("usuarios.db")
+        self.crear_tabla()
 
         # Crear la tabla para mostrar los datos
         self.tabla = ttk.Treeview(self, columns=("Nombre", "Correo", "Contraseña"), show="headings")
@@ -55,18 +59,20 @@ class RegistroApp(tk.Tk):
         buscar_button = tk.Button(self, text="Buscar", command=self.buscar_datos)
         buscar_button.grid(row=5, column=2, padx=10, pady=5)
 
-        # Cargar los datos desde el archivo CSV
+        # Cargar los datos desde la base de datos
         self.cargar_datos()
 
+    def crear_tabla(self):
+        cursor = self.conexion.cursor()
+        cursor.execute("CREATE TABLE IF NOT EXISTS usuarios (nombre TEXT, correo TEXT, contrasena TEXT)")
+        self.conexion.commit()
+
     def cargar_datos(self):
-        try:
-            with open("password.csv", "r") as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    if len(row) == 3:
-                        self.tabla.insert("", "end", values=row)
-        except FileNotFoundError:
-            pass
+        cursor = self.conexion.cursor()
+        cursor.execute("SELECT nombre, correo, contrasena FROM usuarios")
+        rows = cursor.fetchall()
+        for row in rows:
+            self.tabla.insert("", "end", values=row)
 
     def guardar_datos(self):
         nombre = self.nombre_var.get()
@@ -79,12 +85,11 @@ class RegistroApp(tk.Tk):
             self.limpiar_campos()
             messagebox.showinfo("Éxito", "Datos guardados correctamente.")
 
-            # Guardar los datos en un archivo CSV
-            with open("password.csv", "w", newline="") as file:
-                writer = csv.writer(file)
-                for item in self.tabla.get_children():
-                    row = self.tabla.item(item)["values"]
-                    writer.writerow(row)
+            # Guardar los datos en la base de datos
+            cursor = self.conexion.cursor()
+            cursor.execute("INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)",
+                           (nombre, correo, contrasena))
+            self.conexion.commit()
         else:
             messagebox.showerror("Error", "Por favor, rellene todos los campos.")
 
@@ -99,14 +104,12 @@ class RegistroApp(tk.Tk):
     def buscar_datos(self):
         termino = self.buscar_entry.get()
         if termino:
-            # Cargar los datos desde el archivo CSV y filtrar las filas que coincidan con el término de búsqueda
-            try:
-                with open("password.csv", "r") as file:
-                    reader = csv.reader(file)
-                    resultados = [row for row in reader if len(row) == 3 and any(termino.lower() in value.lower() for value in row)]
-                    self.mostrar_resultados(resultados)
-            except FileNotFoundError:
-                pass
+            # Buscar los datos en la base de datos
+            cursor = self.conexion.cursor()
+            cursor.execute("SELECT nombre, correo, contrasena FROM usuarios WHERE LOWER(nombre) LIKE ? OR LOWER(correo) LIKE ?",
+                           ('%' + termino.lower() + '%', '%' + termino.lower() + '%'))
+            rows = cursor.fetchall()
+            self.mostrar_resultados(rows)
         else:
             messagebox.showwarning("Advertencia", "Por favor, ingrese un término de búsqueda.")
 
