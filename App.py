@@ -17,7 +17,7 @@ class RegistroApp(tk.Tk):
         self.contrasena_var = tk.StringVar()
 
         # Conectar a la base de datos SQLite
-        self.conexion = sqlite3.connect("usuarios.db")
+        self.conexion = sqlite3.connect("Password.db")
         self.crear_tabla()
 
         # Crear la tabla para mostrar los datos
