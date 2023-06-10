@@ -4,12 +4,13 @@ from tkinter import messagebox
 import sqlite3
 import random
 import string
+import pyperclip
 
 
 class RegistroApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Registro de Usuarios")
+        self.title("Gestor De Contraseñas")
 
         # Crear variables para almacenar los datos ingresados
         self.nombre_var = tk.StringVar()
@@ -21,7 +22,9 @@ class RegistroApp(tk.Tk):
         self.crear_tabla()
 
         # Crear la tabla para mostrar los datos
-        self.tabla = ttk.Treeview(self, columns=("Nombre", "Correo", "Contraseña"), show="headings")
+        self.tabla = ttk.Treeview(
+            self, columns=("Nombre", "Correo", "Contraseña"), show="headings"
+        )
         self.tabla.heading("Nombre", text="Nombre")
         self.tabla.heading("Correo", text="Correo")
         self.tabla.heading("Contraseña", text="Contraseña")
@@ -40,11 +43,17 @@ class RegistroApp(tk.Tk):
 
         contrasena_label = tk.Label(self, text="Contraseña:")
         contrasena_label.grid(row=3, column=0, sticky="w", padx=10, pady=5)
-        self.contrasena_entry = tk.Entry(self, textvariable=self.contrasena_var, show="*")
-        self.contrasena_entry.grid(row=3, column=1, columnspan=3, sticky="we", padx=10, pady=5)
+        self.contrasena_entry = tk.Entry(
+            self, textvariable=self.contrasena_var, show="*"
+        )
+        self.contrasena_entry.grid(
+            row=3, column=1, columnspan=3, sticky="we", padx=10, pady=5
+        )
 
         # Botón para generar contraseña aleatoria
-        generar_button = tk.Button(self, text="Generar Contraseña", command=self.generar_contrasena)
+        generar_button = tk.Button(
+            self, text="Generar Contraseña", command=self.generar_contrasena
+        )
         generar_button.grid(row=3, column=4, padx=10, pady=5)
 
         # Botón para guardar los datos
@@ -59,12 +68,38 @@ class RegistroApp(tk.Tk):
         buscar_button = tk.Button(self, text="Buscar", command=self.buscar_datos)
         buscar_button.grid(row=5, column=2, padx=10, pady=5)
 
+        # Botón para mostrar todos los datos nuevamente
+        mostrar_todo_button = tk.Button(
+            self, text="Mostrar Todo", command=self.mostrar_todo
+        )
+        mostrar_todo_button.grid(row=5, column=3, padx=10, pady=5)
+
+        # Botón para copiar el nombre
+        copiar_nombre_button = tk.Button(
+            self, text="Copiar Nombre", command=self.copiar_nombre
+        )
+        copiar_nombre_button.grid(row=6, column=0, padx=10, pady=5)
+
+        # Botón para copiar el correo
+        copiar_correo_button = tk.Button(
+            self, text="Copiar Correo", command=self.copiar_correo
+        )
+        copiar_correo_button.grid(row=6, column=1, padx=10, pady=5)
+
+        # Botón para copiar la contraseña
+        copiar_contrasena_button = tk.Button(
+            self, text="Copiar Contraseña", command=self.copiar_contrasena
+        )
+        copiar_contrasena_button.grid(row=6, column=2, padx=10, pady=5)
+
         # Cargar los datos desde la base de datos
         self.cargar_datos()
 
     def crear_tabla(self):
         cursor = self.conexion.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS usuarios (nombre TEXT, correo TEXT, contrasena TEXT)")
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS usuarios (nombre TEXT, correo TEXT, contrasena TEXT)"
+        )
         self.conexion.commit()
 
     def cargar_datos(self):
@@ -87,8 +122,10 @@ class RegistroApp(tk.Tk):
 
             # Guardar los datos en la base de datos
             cursor = self.conexion.cursor()
-            cursor.execute("INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)",
-                           (nombre, correo, contrasena))
+            cursor.execute(
+                "INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)",
+                (nombre, correo, contrasena),
+            )
             self.conexion.commit()
         else:
             messagebox.showerror("Error", "Por favor, rellene todos los campos.")
@@ -104,65 +141,69 @@ class RegistroApp(tk.Tk):
     def buscar_datos(self):
         termino = self.buscar_entry.get()
         if termino:
+            # Limpiar la tabla antes de mostrar los resultados de búsqueda
+            self.tabla.delete(*self.tabla.get_children())
+
             # Buscar los datos en la base de datos
             cursor = self.conexion.cursor()
-            cursor.execute("SELECT nombre, correo, contrasena FROM usuarios WHERE LOWER(nombre) LIKE ? OR LOWER(correo) LIKE ?",
-                           ('%' + termino.lower() + '%', '%' + termino.lower() + '%'))
+            cursor.execute(
+                "SELECT nombre, correo, contrasena FROM usuarios WHERE LOWER(nombre) LIKE ? OR LOWER(correo) LIKE ?",
+                ("%" + termino.lower() + "%", "%" + termino.lower() + "%"),
+            )
             rows = cursor.fetchall()
-            self.mostrar_resultados(rows)
+            for row in rows:
+                self.tabla.insert("", "end", values=row)
         else:
-            messagebox.showwarning("Advertencia", "Por favor, ingrese un término de búsqueda.")
+            messagebox.showwarning(
+                "Advertencia", "Por favor, ingrese un término de búsqueda."
+            )
 
-    def mostrar_resultados(self, resultados):
-        # Crear una ventana emergente para mostrar los resultados de la búsqueda
-        ventana_resultados = tk.Toplevel(self)
-        ventana_resultados.title("Resultados de Búsqueda")
+    def mostrar_todo(self):
+        # Limpiar la tabla antes de mostrar todos los datos
+        self.tabla.delete(*self.tabla.get_children())
 
-        if resultados:
-            # Crear una tabla para mostrar los resultados
-            tabla_resultados = ttk.Treeview(ventana_resultados, columns=("Nombre", "Correo", "Contraseña"), show="headings")
-            tabla_resultados.heading("Nombre", text="Nombre")
-            tabla_resultados.heading("Correo", text="Correo")
-            tabla_resultados.heading("Contraseña", text="Contraseña")
-            tabla_resultados.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-
-            for row in resultados:
-                tabla_resultados.insert("", "end", values=row)
-
-            # Botones para copiar los datos seleccionados
-            copiar_nombre_button = tk.Button(ventana_resultados, text="Copiar Nombre", command=lambda: self.copiar_dato_seleccionado(tabla_resultados, 0))
-            copiar_nombre_button.grid(row=1, column=0, padx=1, pady=5)
-
-            copiar_correo_button = tk.Button(ventana_resultados, text="Copiar Correo", command=lambda: self.copiar_dato_seleccionado(tabla_resultados, 1))
-            copiar_correo_button.grid(row=2, column=0, padx=2, pady=5)
-
-            copiar_contrasena_button = tk.Button(ventana_resultados, text="Copiar Contraseña", command=lambda: self.copiar_dato_seleccionado(tabla_resultados, 2))
-            copiar_contrasena_button.grid(row=3, column=0, padx=3, pady=5)
-        else:
-            mensaje_label = tk.Label(ventana_resultados, text="No se encontraron resultados.")
-            mensaje_label.grid(row=1, column=0, padx=5, pady=5)
-
-    def copiar_dato_seleccionado(self, tabla, columna):
-        # Obtener el índice de la fila seleccionada
-        seleccion = tabla.selection()
-        if seleccion:
-            # Obtener el valor de la columna seleccionada
-            valor = tabla.item(seleccion[0])["values"][columna]
-            if valor:
-                # Copiar el dato al portapapeles
-                self.clipboard_clear()
-                self.clipboard_append(valor)
-                messagebox.showinfo("Éxito", "Dato copiado al portapapeles.")
-        else:
-            messagebox.showwarning("Advertencia", "Por favor, seleccione una fila.")
+        # Cargar los datos desde la base de datos
+        self.cargar_datos()
 
     def generar_contrasena(self):
-        longitud = 20
+        longitud = 12
         caracteres = string.ascii_letters + string.digits + string.punctuation
-        contrasena = ''.join(random.choice(caracteres) for _ in range(longitud))
+        contrasena = "".join(random.choice(caracteres) for _ in range(longitud))
         self.contrasena_var.set(contrasena)
+
+    def copiar_nombre(self):
+        seleccion = self.tabla.focus()
+        if seleccion:
+            nombre = self.tabla.item(seleccion)["values"][0]
+            pyperclip.copy(nombre)
+            messagebox.showinfo("Éxito", "Nombre copiado al portapapeles.")
+        else:
+            messagebox.showwarning("Advertencia", "Por favor, seleccione un registro.")
+
+    def copiar_correo(self):
+        seleccion = self.tabla.focus()
+        if seleccion:
+            correo = self.tabla.item(seleccion)["values"][1]
+            pyperclip.copy(correo)
+            messagebox.showinfo("Éxito", "Correo copiado al portapapeles.")
+        else:
+            messagebox.showwarning("Advertencia", "Por favor, seleccione un registro.")
+
+    def copiar_contrasena(self):
+        seleccion = self.tabla.focus()
+        if seleccion:
+            contrasena = self.tabla.item(seleccion)["values"][2]
+            pyperclip.copy(contrasena)
+            messagebox.showinfo("Éxito", "Contraseña copiada al portapapeles.")
+        else:
+            messagebox.showwarning("Advertencia", "Por favor, seleccione un registro.")
+
+    def on_closing(self):
+        self.conexion.close()
+        self.destroy()
 
 
 if __name__ == "__main__":
     app = RegistroApp()
+    app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()
