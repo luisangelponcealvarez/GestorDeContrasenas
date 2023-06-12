@@ -7,6 +7,100 @@ import string
 import pyperclip
 
 
+class LoginApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Inicio de Sesión")
+        self.iconbitmap(
+            "D:\mis archivos\documentos\PersonalesProyectos\GestorDeContrasenas\GestorDeContraseñas.ico"
+        )
+        self.geometry("300x150")
+
+        self.conexion = sqlite3.connect("Password.db")
+        self.crear_tabla()
+
+        self.password_var = tk.StringVar()
+
+        password_label = tk.Label(self, text="Contraseña:")
+        password_label.pack(pady=10)
+        password_entry = tk.Entry(self, textvariable=self.password_var, show="*")
+        password_entry.pack(pady=5)
+
+        login_button = tk.Button(
+            self, text="Iniciar Sesión", command=self.verificar_contraseña
+        )
+        login_button.pack(pady=10)
+
+        create_password_button = tk.Button(
+            self, text="Crear Contraseña Maestra", command=self.crear_contrasena_maestra
+        )
+        create_password_button.pack(pady=5)
+
+    def crear_tabla(self):
+        cursor = self.conexion.cursor()
+        cursor.execute("CREATE TABLE IF NOT EXISTS configuracion (contrasena TEXT)")
+        self.conexion.commit()
+
+    def verificar_contraseña(self):
+        cursor = self.conexion.cursor()
+        cursor.execute("SELECT contrasena FROM configuracion")
+        resultado = cursor.fetchone()
+        if resultado:
+            contraseña_guardada = resultado[0]
+            contraseña_ingresada = self.password_var.get()
+            if contraseña_guardada == contraseña_ingresada:
+                self.destroy()
+                app = RegistroApp()
+                app.protocol("WM_DELETE_WINDOW", app.on_closing)
+                app.mainloop()
+            else:
+                messagebox.showerror("Error", "Contraseña incorrecta.")
+        else:
+            messagebox.showerror(
+                "Error",
+                "No se ha configurado una contraseña. Por favor, configúrela antes de iniciar sesión.",
+            )
+
+    def crear_contrasena_maestra(self):
+        contraseña_maestra = self.password_var.get()
+        if not contraseña_maestra:
+            messagebox.showerror("Error", "Por favor, ingrese una contraseña maestra.")
+        else:
+            cursor = self.conexion.cursor()
+            cursor.execute(
+                "UPDATE configuracion SET contrasena = ?", (contraseña_maestra,)
+            )
+            self.conexion.commit()
+            messagebox.showinfo(
+                "Éxito",
+                "Contraseña maestra creada correctamente:\n\n{}".format(
+                    contraseña_maestra
+                ),
+            )
+            self.copiar_contrasena_maestra(
+                contraseña_maestra
+            )  # Copia la contraseña al portapapeles
+            self.iniciar_sesion(contraseña_maestra)  # Inicia sesión automáticamente
+
+    def copiar_contrasena_maestra(self, contraseña):
+        pyperclip.copy(contraseña)
+        messagebox.showinfo(
+            "Copiado", "La contraseña maestra ha sido copiada al portapapeles."
+        )
+
+    def generar_contrasena(self):
+        longitud = 20
+        caracteres = string.ascii_letters + string.digits + string.punctuation
+        contrasena = "".join(random.choice(caracteres) for _ in range(longitud))
+        return contrasena
+
+    def iniciar_sesion(self, contraseña):
+        self.destroy()
+        app = RegistroApp()
+        app.protocol("WM_DELETE_WINDOW", app.on_closing)
+        app.mainloop()
+
+
 class RegistroApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -169,7 +263,7 @@ class RegistroApp(tk.Tk):
         self.cargar_datos()
 
     def generar_contrasena(self):
-        longitud = 12
+        longitud = 20
         caracteres = string.ascii_letters + string.digits + string.punctuation
         contrasena = "".join(random.choice(caracteres) for _ in range(longitud))
         self.contrasena_var.set(contrasena)
@@ -207,6 +301,5 @@ class RegistroApp(tk.Tk):
 
 
 if __name__ == "__main__":
-    app = RegistroApp()
-    app.protocol("WM_DELETE_WINDOW", app.on_closing)
+    app = LoginApp()
     app.mainloop()
